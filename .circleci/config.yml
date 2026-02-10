@@ -1,23 +1,26 @@
 version: 2.1
 
 orbs:
-  flutter: circleci/flutter@2.0.0
+  android: circleci/android@1.0.3
+  flutter: circleci/flutter@1.1.0
 
 jobs:
   build_flutter_apk:
     executor:
-      name: flutter/default
-      tag: "3.24.0"
+      name: android/android-machine
+      resource-class: medium
     steps:
       - checkout
+
+      - flutter/install_sdk:
+          version: 3.24.0
+
+      - flutter/install_pub:
+          cache-version: v1
 
       - run:
           name: Flutter Doctor
           command: flutter doctor
-
-      - run:
-          name: Get Dependencies
-          command: flutter pub get
 
       - run:
           name: Build APK
