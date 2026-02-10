@@ -7,7 +7,7 @@ jobs:
   build_flutter_apk:
     executor:
       name: flutter/default
-      tag: "3.24.0"  # ← specify your Flutter version
+      tag: "3.24.0"
     steps:
       - checkout
 
@@ -31,21 +31,3 @@ workflows:
   build:
     jobs:
       - build_flutter_apk
-```
-
----
-
-### What was wrong in your config:
-
-| Issue | Fix |
-|---|---|
-| `flutter/bin/flutter` wrong path | Use `flutter` directly via orb executor |
-| Used `cimg/android` image manually | Use `flutter/default` executor — has Flutter + Android preinstalled |
-| Missing `flutter pub get` | Added it before build |
-| `version: 2` in workflows | Removed — deprecated in 2.1 |
-
----
-
-### If you need a specific Flutter version check available tags:
-```
-https://hub.docker.com/r/cimg/flutter/tags
