@@ -1,23 +1,51 @@
 version: 2.1
+
 orbs:
-  android: circleci/android@3.0.1
   flutter: circleci/flutter@2.0.0
+
 jobs:
   build_flutter_apk:
-    docker:
-      - image: cimg/android:2025.11.1
+    executor:
+      name: flutter/default
+      tag: "3.24.0"  # ← specify your Flutter version
     steps:
       - checkout
+
       - run:
-          name: Install Flutter
-          command: flutter/bin/flutter doctor
+          name: Flutter Doctor
+          command: flutter doctor
+
+      - run:
+          name: Get Dependencies
+          command: flutter pub get
+
       - run:
           name: Build APK
-          command: flutter/bin/flutter build apk --release
+          command: flutter build apk --release
+
       - store_artifacts:
           path: build/app/outputs/flutter-apk/app-release.apk
+          destination: app-release.apk
+
 workflows:
-  version: 2
   build:
     jobs:
       - build_flutter_apk
+```
+
+---
+
+### What was wrong in your config:
+
+| Issue | Fix |
+|---|---|
+| `flutter/bin/flutter` wrong path | Use `flutter` directly via orb executor |
+| Used `cimg/android` image manually | Use `flutter/default` executor — has Flutter + Android preinstalled |
+| Missing `flutter pub get` | Added it before build |
+| `version: 2` in workflows | Removed — deprecated in 2.1 |
+
+---
+
+### If you need a specific Flutter version check available tags:
+```
+https://hub.docker.com/r/cimg/flutter/tags
