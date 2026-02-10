@@ -1,5 +1,4 @@
 version: 2.1
-
 orbs:
   flutter: circleci/flutter@1.1.0
 
@@ -12,7 +11,7 @@ jobs:
       - checkout
 
       - flutter/install_sdk:
-          version: 3.38.2
+          version: 3.24.0
 
       - run:
           name: Flutter Doctor
@@ -30,7 +29,42 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           destination: app-release.apk
 
+  build_flutter_ipa:
+    macos:
+      xcode: 15.4.0
+    resource_class: macos.m1.medium.gen1
+    steps:
+      - checkout
+
+      - flutter/install_sdk:
+          version: 3.24.0
+
+      - run:
+          name: Flutter Doctor
+          command: flutter doctor
+
+      - run:
+          name: Get Dependencies
+          command: flutter pub get
+
+      - run:
+          name: Build iOS (No Codesign)
+          command: flutter build ios --release --no-codesign
+
+      - run:
+          name: Create IPA from .app
+          command: |
+            mkdir -p build/ios/ipa/Payload
+            cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
+            cd build/ios/ipa
+            zip -r app-unsigned.ipa Payload
+
+      - store_artifacts:
+          path: build/ios/ipa/app-unsigned.ipa
+          destination: app-unsigned.ipa
+
 workflows:
   build:
     jobs:
       - build_flutter_apk
+      - build_flutter_ipa
