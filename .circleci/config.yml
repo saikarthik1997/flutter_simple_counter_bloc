@@ -1,13 +1,35 @@
 version: 2.1
+orbs:
+  flutter: circleci/flutter@1.1.0
 
 jobs:
-  build_flutter:
-    macos:
-      xcode: 16.1.0
-    resource_class: macos.m1.large.gen1
+  build_flutter_apk:
+    machine:
+      image: android:2024.11.1
+    resource_class: large
     steps:
       - checkout
+      - flutter/install_sdk:
+          version: 3.38.2
+      - run:
+          name: Flutter Doctor
+          command: flutter doctor
+      - run:
+          name: Get Dependencies
+          command: flutter pub get
+      - run:
+          name: Build APK
+          command: flutter build apk --release
+      - store_artifacts:
+          path: build/app/outputs/flutter-apk/app-release.apk
+          destination: app-release.apk
 
+  build_flutter_ipa:
+    macos:
+      xcode: 16.1.0
+    resource_class: macos.m1.medium.gen1
+    steps:
+      - checkout
       - run:
           name: Install Flutter Manually (ARM64)
           command: |
@@ -16,33 +38,15 @@ jobs:
             unzip flutter_macos_arm64_${FLUTTER_VERSION}-stable.zip -d $HOME
             echo 'export PATH="$HOME/flutter/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
-
-      - run:
-          name: Install Android SDK
-          command: |
-            brew install --cask temurin
-            brew install --cask android-sdk
-            echo 'export ANDROID_HOME="/usr/local/share/android-sdk"' >> $BASH_ENV
-            echo 'export PATH="$ANDROID_HOME/tools/bin:$ANDROID_HOME/platform-tools:$PATH"' >> $BASH_ENV
-            source $BASH_ENV
-            yes | sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0"
-
       - run:
           name: Flutter Doctor
           command: flutter doctor
-
       - run:
           name: Get Dependencies
           command: flutter pub get
-
-      - run:
-          name: Build APK
-          command: flutter build apk --release
-
       - run:
           name: Build iOS (No Codesign)
           command: flutter build ios --release --no-codesign
-
       - run:
           name: Create IPA from .app
           command: |
@@ -50,11 +54,6 @@ jobs:
             cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
             cd build/ios/ipa
             zip -r app-unsigned.ipa Payload
-
-      - store_artifacts:
-          path: build/app/outputs/flutter-apk/app-release.apk
-          destination: app-release.apk
-
       - store_artifacts:
           path: build/ios/ipa/app-unsigned.ipa
           destination: app-unsigned.ipa
@@ -62,4 +61,5 @@ jobs:
 workflows:
   build:
     jobs:
-      - build_flutter
+      - build_flutter_apk
+      - build_flutter_ipa
